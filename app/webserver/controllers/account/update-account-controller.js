@@ -11,9 +11,7 @@ async function validate(data) {
       .required(),*/
     password: Joi.string().pattern(new RegExp('^[a-zA-Z0-9]{3,30}$')),
     newPassword: Joi.string().pattern(new RegExp('^[a-zA-Z0-9]{3,30}$')),
-    name: Joi.string()
-      .max(45)
-      .required()
+    name: Joi.string().max(45)
   });
 
   Joi.assert(data, schema);
