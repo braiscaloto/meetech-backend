@@ -10,10 +10,10 @@ async function validate(data) {
       .email({ minDomainSegments: 2, tlds: false })
       .required(),*/
     password: Joi.string().pattern(new RegExp('^[a-zA-Z0-9]{3,30}$')),
-    newPassword: Joi.string().pattern(new RegExp('^[a-zA-Z0-9]{3,30}$')),
-    name: Joi.string()
+    newPassword: Joi.string().pattern(new RegExp('^[a-zA-Z0-9]{3,30}$'))
+    /*name: Joi.string()
       .max(45)
-      .required()
+      .required()*/
   });
 
   Joi.assert(data, schema);
