@@ -78,7 +78,7 @@ async function updateUser(req, res, next) {
       await connection.query(
         `UPDATE users
             SET password = ?
-            WHERE id = ?`,
+           `,
         {
           //name: userData.name,
           // email: userData.email,
@@ -94,7 +94,7 @@ async function updateUser(req, res, next) {
       await connection.query(
         `UPDATE users
             SET password = ?
-            WHERE id = ?`,
+            `,
         {
           //name: userData.name,
           // email: userData.email,
