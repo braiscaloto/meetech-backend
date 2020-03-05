@@ -75,24 +75,34 @@ async function updateUser(req, res, next) {
 
       const bcryptPassword = await bcrypt.hash(userData.newPassword, 10);
 
-      await connection.query(`UPDATE users SET ? WHERE id = ?`, {
-        name: userData.name,
-        // email: userData.email,
-        password: bcryptPassword,
-        updated_at: now
-      });
+      await connection.query(
+        `UPDATE users
+            SET name = ?,email = ?,password = ?,updated_at = ?
+            WHERE id = ?`,
+        {
+          name: userData.name,
+          // email: userData.email,
+          password: bcryptPassword,
+          updated_at: now
+        }
+      );
       connection.release();
       return res.status(204).send();
     } else {
       /*onst queryUpdateUser = `UPDATE users
             SET name = ?,email = ?,password = ?,updated_at = ?
             WHERE id = ?`;*/
-      await connection.query(`UPDATE users SET ? WHERE id = ?`, {
-        name: userData.name,
-        // email: userData.email,
-        password: bcryptPassword,
-        updated_at: now
-      });
+      await connection.query(
+        `UPDATE users
+            SET name = ?,email = ?,password = ?,updated_at = ?
+            WHERE id = ?`,
+        {
+          name: userData.name,
+          // email: userData.email,
+          password: bcryptPassword,
+          updated_at: now
+        }
+      );
       connection.release();
       return res.status(204).send();
     }
