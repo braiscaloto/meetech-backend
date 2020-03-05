@@ -10,10 +10,10 @@ async function validate(data) {
       .email({ minDomainSegments: 2, tlds: false })
       .required(),*/
     password: Joi.string().pattern(new RegExp('^[a-zA-Z0-9]{3,30}$')),
-    newPassword: Joi.string().pattern(new RegExp('^[a-zA-Z0-9]{3,30}$'))
-    /*name: Joi.string()
+    newPassword: Joi.string().pattern(new RegExp('^[a-zA-Z0-9]{3,30}$')),
+    name: Joi.string()
       .max(45)
-      .required()*/
+      .required()
   });
 
   Joi.assert(data, schema);
@@ -75,24 +75,34 @@ async function updateUser(req, res, next) {
 
       const bcryptPassword = await bcrypt.hash(userData.newPassword, 10);
 
-      await connection.query(`UPDATE users SET ?`, {
-        //name: userData.name,
-        // email: userData.email,
-        password: bcryptPassword,
-        updated_at: now
-      });
+      await connection.query(
+        `UPDATE users
+            SET name = ?, password = ?,updated_at = ?
+            WHERE id = ?`,
+        {
+          name: userData.name,
+          // email: userData.email,
+          password: bcryptPassword,
+          updated_at: now
+        }
+      );
       connection.release();
       return res.status(204).send();
     } else {
       /*onst queryUpdateUser = `UPDATE users
             SET name = ?,email = ?,password = ?,updated_at = ?
             WHERE id = ?`;*/
-      await connection.query(`UPDATE users SET ?`, {
-        //name: userData.name,
-        // email: userData.email,
-        password: bcryptPassword,
-        updated_at: now
-      });
+      await connection.query(
+        `UPDATE users
+            SET name = ?, password = ?,updated_at = ?
+            WHERE id = ?`,
+        {
+          name: userData.name,
+          // email: userData.email,
+          password: bcryptPassword,
+          updated_at: now
+        }
+      );
       connection.release();
       return res.status(204).send();
     }
