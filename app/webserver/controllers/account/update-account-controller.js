@@ -77,13 +77,12 @@ async function updateUser(req, res, next) {
 
       await connection.query(
         `UPDATE users
-            SET name = ?, password = ?,updated_at = ?
+            SET name = ?, password = ?
             WHERE id = ?`,
         {
           name: userData.name,
           // email: userData.email,
-          password: bcryptPassword,
-          updated_at: now
+          password: bcryptPassword
         }
       );
       connection.release();
@@ -94,13 +93,12 @@ async function updateUser(req, res, next) {
             WHERE id = ?`;*/
       await connection.query(
         `UPDATE users
-            SET name = ?, password = ?,updated_at = ?
+            SET name = ?, password = ?
             WHERE id = ?`,
         {
           name: userData.name,
           // email: userData.email,
-          password: bcryptPassword,
-          updated_at: now
+          password: bcryptPassword
         }
       );
       connection.release();
