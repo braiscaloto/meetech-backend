@@ -75,7 +75,7 @@ async function updateUser(req, res, next) {
 
       const bcryptPassword = await bcrypt.hash(userData.newPassword, 10);
 
-      await connection.query(`UPDATE users SET ?`, {
+      await connection.query(`UPDATE users SET ? WHERE id = ?`, {
         name: userData.name,
         // email: userData.email,
         password: bcryptPassword,
@@ -87,7 +87,7 @@ async function updateUser(req, res, next) {
       /*onst queryUpdateUser = `UPDATE users
             SET name = ?,email = ?,password = ?,updated_at = ?
             WHERE id = ?`;*/
-      await connection.query(`UPDATE users SET ?`, {
+      await connection.query(`UPDATE users SET ? WHERE id = ?`, {
         name: userData.name,
         // email: userData.email,
         password: bcryptPassword,
