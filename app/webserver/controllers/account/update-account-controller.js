@@ -77,7 +77,7 @@ async function updateUser(req, res, next) {
 
       await connection.query(
         `UPDATE users
-            SET name = ?,email = ?,password = ?,updated_at = ?
+            SET name = ?,password = ?,updated_at = ?
             WHERE id = ?`,
         {
           name: userData.name,
@@ -94,7 +94,7 @@ async function updateUser(req, res, next) {
             WHERE id = ?`;*/
       await connection.query(
         `UPDATE users
-            SET name = ?,email = ?,password = ?,updated_at = ?
+            SET name = ?,password = ?,updated_at = ?
             WHERE id = ?`,
         {
           name: userData.name,
