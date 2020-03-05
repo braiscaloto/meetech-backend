@@ -1,120 +1,100 @@
-'use strict';
+"use strict";
 
-const Joi = require('@hapi/joi');
-const mysqlPool = require('../../../database/mysql-pool');
-const bcrypt = require('bcrypt');
+const Joi = require("@hapi/joi");
+const bcrypt = require("bcrypt");
+const mysqlPool = require("../../../database/mysql-pool");
 
-async function validate(data) {
+async function validate(payload) {
   const schema = Joi.object({
-    /*email: Joi.string()
-      .email({ minDomainSegments: 2, tlds: false })
-      .required(),*/
-    password: Joi.string().pattern(new RegExp('^[a-zA-Z0-9]{3,30}$')),
-    newPassword: Joi.string().pattern(new RegExp('^[a-zA-Z0-9]{3,30}$'))
-    //name: Joi.string().max(45)
+    oldPassword: Joi.string()
+      .regex(/^[a-zA-Z0-9]{3,30}$/)
+      .required(),
+    newPassword: Joi.string()
+      .regex(/^[a-zA-Z0-9]{3,30}$/)
+      .required()
   });
-
-  Joi.assert(data, schema);
+  Joi.assert(payload, schema);
 }
 
-async function updateUser(req, res, next) {
+async function updateAccount(req, res) {
   const { userId } = req.claims;
-  const userData = {
-    ...req.body
-  };
+  const accountData = { ...req.body };
 
   try {
-    await validate(userData);
+    await validate(accountData);
   } catch (e) {
     console.error(e);
-    return res.status(400).send(e);
+    return res.status(400).send("Data are not valid");
   }
 
+  const now = new Date()
+    .toISOString()
+    .substring(0, 19)
+    .replace("T", " ");
+  const securePwd = await bcrypt.hash(accountData.newPassword, 10);
+
+  const sqlQuery = `SELECT  password, email
+         FROM users WHERE id = ? AND deleted_at IS NULL`;
+
   let connection;
-  let actualPassword;
   try {
     connection = await mysqlPool.getConnection();
-    const mysqlQuery = `SELECT password FROM users WHERE id=?`;
-    const [rows] = await connection.execute(mysqlQuery, [userId]);
-    connection.release();
+
+    const [rows] = await connection.query(sqlQuery, [userId]);
 
     if (rows.length !== 1) {
-      return res.status(404).send();
+      return res.status(404).send("User not found");
     }
 
-    actualPassword = rows[0].password;
+    const user = rows[0];
+
+    const isPasswordOk = await bcrypt.compare(
+      accountData.oldPassword,
+      user.password
+    );
+
+    if (!isPasswordOk) {
+      return res.status(401).send("Old password not correct");
+    }
+
+    if (accountData.oldPassword === accountData.newPassword) {
+      return res.status(400).send("Password reuse not permitted");
+    }
+
+    const securePwd = await bcrypt.hash(accountData.newPassword, 10);
+
+    const sqlUpdateUser = `UPDATE users
+                                SET password = ?,
+                                updated_at = ?
+                                WHERE id = ?`;
+
+    const [updateStatus] = await connection.execute(sqlUpdateUser, [
+      securePwd,
+      now,
+      userId
+    ]);
+    connection.release();
+
+    if (updateStatus.changedRows !== 1) {
+      return res.status(404).send("Update password error");
+    }
+
+    connection.release();
+
+    try {
+      await sendEmailPassword(user.email, null);
+    } catch (e) {
+      console.error(e);
+    }
+
+    return res.send();
   } catch (e) {
     if (connection) {
       connection.release();
     }
-
     console.error(e);
     return res.status(500).send();
   }
-
-  try {
-    connection = await mysqlPool.getConnection();
-    const now = new Date()
-      .toISOString()
-      .replace('T', ' ')
-      .substring(0, 19);
-
-    if (userData.newPassword !== undefined) {
-      const isPasswordOk = await bcrypt.compare(
-        userData.password,
-        actualPassword
-      );
-      if (!isPasswordOk) {
-        return res.status(401).send();
-      }
-      /*const queryUpdateUser = `UPDATE users
-            SET name = ?,email = ?,password = ?,updated_at = ?
-            WHERE id = ?`;*/
-
-      const bcryptPassword = await bcrypt.hash(userData.newPassword, 10);
-
-      await connection.query(
-        `UPDATE users
-            SET password = ?, updated_at= ?
-            WHERE id = ?`,
-        {
-          //name: userData.name,
-          // email: userData.email,
-          password: bcryptPassword,
-          now,
-          userId
-        }
-      );
-      connection.release();
-      return res.status(204).send();
-    } else {
-      /*onst queryUpdateUser = `UPDATE users
-            SET name = ?,email = ?,password = ?,updated_at = ?
-            WHERE id = ?`;*/
-      await connection.query(
-        `UPDATE users
-            SET password = ?, updated_at= ?
-            WHERE id = ?`,
-        {
-          //name: userData.name,
-          // email: userData.email,
-          password: bcryptPassword,
-          now,
-          userId
-        }
-      );
-      connection.release();
-      return res.status(204).send();
-    }
-  } catch (e) {
-    if (connection) {
-      connection.release();
-    }
-    console.error(e);
-    return res.status(500).send({
-      message: e.message
-    });
-  }
 }
 
-module.exports = updateUser;
+module.exports = updateAccount;
